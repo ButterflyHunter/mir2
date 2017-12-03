@@ -14052,7 +14052,15 @@ namespace Server.MirObjects
         {
             item.Count -= cost;
             Enqueue(new S.DeleteItem { UniqueID = item.UniqueID, Count = cost });
-
+            if (Settings.UseSQLServer)
+            {
+                using (var ctx = new DataContext())
+                {
+                    ctx.UserItems.Attach(item);
+                    ctx.Entry(item).State = EntityState.Modified;
+                    ctx.SaveChanges();
+                }
+            }
 
             if (item.Count != 0) return;
 
@@ -14063,6 +14071,17 @@ namespace Server.MirObjects
                     for (int j = 0; j < Info.Equipment[i].Slots.Length; j++)
                     {
                         if (Info.Equipment[i].Slots[j] != item) continue;
+                        if (Settings.UseSQLServer)
+                        {
+                            using (var ctx = new DataContext())
+                            {
+                                ctx.UserItems.Attach(Info.Equipment[i]);
+                                ctx.Entry(Info.Equipment[i]).State = EntityState.Modified;
+                                ctx.UserItems.Attach(Info.Equipment[i].Slots[j]);
+                                ctx.Entry(Info.Equipment[i].Slots[j]).State = EntityState.Deleted;
+                                ctx.SaveChanges();
+                            }
+                        }
                         Info.Equipment[i].Slots[j] = null;
                         return;
                     }
@@ -14070,13 +14089,40 @@ namespace Server.MirObjects
 
                 if (Info.Equipment[i] != item) continue;
                 Info.Equipment[i] = null;
-
+                if (Settings.UseSQLServer)
+                {
+                    using (var ctx = new DataContext())
+                    {
+                        ctx.UserItems.Attach(Info.Equipment[i]);
+                        ctx.Entry(Info.Equipment[i]).State = EntityState.Deleted;
+                        var eq = ctx.Equipments.OrderBy(e => e.id).Where(e => e.CharacterIndex == Info.Index).Skip(i).FirstOrDefault();
+                        if (eq != null)
+                        {
+                            eq.ItemUniqueID = null;
+                        }
+                        ctx.SaveChanges();
+                    }
+                }
                 return;
             }
 
             for (int i = 0; i < Info.Inventory.Length; i++)
             {
                 if (Info.Inventory[i] != item) continue;
+                if (Settings.UseSQLServer)
+                {
+                    using (var ctx = new DataContext())
+                    {
+                        ctx.UserItems.Attach(Info.Equipment[i]);
+                        ctx.Entry(Info.Equipment[i]).State = EntityState.Deleted;
+                        var dbIvt = ctx.Inventories.OrderBy(ivt => ivt.id).Where(ivt => ivt.CharacterIndex == Info.Index).Skip(i).FirstOrDefault();
+                        if (dbIvt != null)
+                        {
+                            dbIvt.ItemUniqueID = null;
+                        }
+                        ctx.SaveChanges();
+                    }
+                }
                 Info.Inventory[i] = null;
                 return;
             }
