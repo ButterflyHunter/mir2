@@ -421,6 +421,12 @@ namespace Launcher
             Close();
         }
 
+        private void Minimized_button_Click(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Minimized;//最小化 
+        }
+
+
         private void Movement_panel_MouseClick(object sender, MouseEventArgs e)
         {
             if (ConfigForm.Visible) ConfigForm.Visible = false;
@@ -654,11 +660,11 @@ namespace Launcher
 
         private void AMain_FormClosed(object sender, FormClosedEventArgs e)
         {
-                MoveOldFilesToCurrent();
+            MoveOldFilesToCurrent();
 
-                Launch_pb?.Dispose();
-                Close_pb?.Dispose();
-                Environment.Exit(0);
+            Launch_pb?.Dispose();
+            Close_pb?.Dispose();
+            Environment.Exit(0);
         }
 
         private static string[] suffixes = new[] { " B", " KB", " MB", " GB", " TB", " PB" };
@@ -708,5 +714,5 @@ namespace Launcher
                     File.Move(oldFilename, originalFilename);
             }
         }
-    } 
+    }
 }
